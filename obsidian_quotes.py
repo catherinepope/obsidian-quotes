@@ -130,6 +130,32 @@ class ObsidianQuoteDisplay:
         
         return text
     
+    def get_obsidian_uri(self, file_path):
+        """Generate an Obsidian URI to open the file"""
+        # Use absolute path approach which is more reliable
+        import urllib.parse
+        absolute_path = str(file_path.absolute())
+        encoded_path = urllib.parse.quote(absolute_path)
+        
+        return f"obsidian://open?path={encoded_path}"
+        """Remove basic markdown formatting for cleaner display"""
+        # Remove bold and italic markers
+        text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)  # Bold
+        text = re.sub(r'\*(.*?)\*', r'\1', text)      # Italic
+        text = re.sub(r'__(.*?)__', r'\1', text)      # Bold alternative
+        text = re.sub(r'_(.*?)_', r'\1', text)        # Italic alternative
+        
+        # Remove inline code markers
+        text = re.sub(r'`(.*?)`', r'\1', text)
+        
+        # Remove wiki-style links [[link]]
+        text = re.sub(r'\[\[(.*?)\]\]', r'\1', text)
+        
+        # Remove standard markdown links [text](url)
+        text = re.sub(r'\[(.*?)\]\(.*?\)', r'\1', text)
+        
+        return text
+    
     def get_random_quote(self):
         """Get a random paragraph from a random book note"""
         markdown_files = self.get_markdown_files()
@@ -152,11 +178,13 @@ class ObsidianQuoteDisplay:
                 if paragraphs:
                     random_paragraph = random.choice(paragraphs)
                     clean_paragraph = self.clean_markdown(random_paragraph)
+                    obsidian_uri = self.get_obsidian_uri(random_file)
                     
                     return {
                         'quote': clean_paragraph,
                         'book': book_title,
-                        'file': random_file.name
+                        'file': random_file.name,
+                        'obsidian_link': obsidian_uri
                     }
                     
             except Exception as e:
@@ -174,6 +202,7 @@ class ObsidianQuoteDisplay:
             print("=" * 80)
             print(f"\n📚 From: {result['book']}")
             print(f"📄 File: {result['file']}")
+            print(f"🔗 Open in Obsidian: {result['obsidian_link']}")
             print("\n" + "─" * 80)
             print(f"\n{result['quote']}")
             print("\n" + "─" * 80)
